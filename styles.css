@@ -72,19 +72,43 @@ code, .mono { font-family: var(--font-mono); }
   background: rgba(2,11,24,0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-}
+  
 .nav-logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-display); font-weight: 800; font-size: 1.2rem;
-  color: var(--white); text-decoration: none; letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  position: relative; /* Required for the underline positioning */
+  padding-bottom: 4px; /* Space for the underline */
 }
-.nav-logo .logo-accent { color: var(--cyan); }
-.nav-links { display: flex; gap: 1.8rem; align-items: center; }
-.nav-link {
-  font-size: 0.82rem; font-weight: 500; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--muted);
-  cursor: pointer; transition: color 0.2s;
-  background: none; border: none;
+
+/* This creates the custom underline */
+.nav-logo::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 40px; /* Adjust this to start the line after your logo icon */
+  width: calc(100% - 40px); /* Matches the width of the text */
+  height: 3px;
+  
+  /* Gradient that matches the 'Trade' glow */
+  background: linear-gradient(90deg, #00F2FE 0%, #4FACFE 100%);
+  
+  /* Adds that 'neon' glow effect */
+  box-shadow: 0px 0px 8px rgba(79, 172, 254, 0.6);
+  border-radius: 2px;
+}
+
+.nav-logo .logo-accent {
+  background: linear-gradient(90deg, #00F2FE 0%, #4FACFE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 }
 .nav-link:hover { color: var(--cyan); }
 .nav-cta {

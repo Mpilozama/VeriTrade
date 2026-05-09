@@ -2,9 +2,6 @@
 VeriTrade AI — FastAPI Backend
 Blockchain-Backed Trade Compliance Engine
 """
-
-import os
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,9 +10,14 @@ import hashlib
 import json
 import datetime
 import uuid
+import os
+from dotenv import load_dotenv
 import requests
 
 app = FastAPI(title="VeriTrade AI Compliance Engine", version="1.0.0")
+load_dotenv()
+NOAH_API_KEY = os.getenv("NOAH_API_KEY")
+
 
 # Allow all origins for hackathon demo
 app.add_middleware(
@@ -172,6 +174,30 @@ def compute_risk(manifest: ManifestInput) -> dict:
     }
 
 
+
+async def get_noah_insights(manifest: ManifestInput):
+    """Calls Noah AI for deep ethical reasoning and vibe-checks."""
+    if not NOAH_API_KEY:
+        return {"score": 0, "reason": "Noah AI not configured."}
+
+    # Custom prompt for the trade use-case
+    prompt = f"Analyze ethical risk for: {manifest.cargo_items} from {manifest.origin_country}."
+    
+    # Check trynoah.ai docs for the exact endpoint URL provided in the hackathon
+    url = "https://api.trynoah.ai/v1/analyze" 
+    headers = {"Authorization": f"Bearer {NOAH_API_KEY}"}
+    
+    try:
+        response = requests.post(url, headers=headers, json={"prompt": prompt}, timeout=5)
+        data = response.json()
+        return {
+            "score": data.get("risk_boost", 10), # Added risk if AI finds a loophole
+            "reason": data.get("explanation", "AI suggests high scrutiny for this route.")
+        }
+    except:
+        return {"score": 0, "reason": "Noah AI offline, using rule-based logic only."}
+
+
 def build_audit_record(manifest: ManifestInput, risk_result: dict) -> dict:
     """
     Build a fully deterministic, JSON-serialisable audit record.
@@ -206,24 +232,14 @@ def sha256_of_record(record: dict) -> str:
     return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 
+
+
 # ─────────────────────────────────────────────
 # ROUTES
 # ─────────────────────────────────────────────
 @app.get("/")
 def root():
     return {"service": "VeriTrade AI Compliance Engine", "status": "operational"}
-
-NOAH_API_KEY = "YOUR_NOAH_AI_KEY_HERE"
-
-async def get_noah_analysis(manifest_data):
-    # This sends your trade info to Noah AI
-    url = "https://api.trynoah.ai/v1/analyze" # Replace with their actual endpoint
-    headers = {"Authorization": f"Bearer {NOAH_API_KEY}"}
-    
-    prompt = f"Analyze this trade for ethical risks and Solana ecosystem compliance: {manifest_data}"
-    
-    response = requests.post(url, headers=headers, json={"prompt": prompt})
-    return response.json()
 
 @app.post("/api/assess")
 def assess_manifest(manifest: ManifestInput):
