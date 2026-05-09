@@ -1,0 +1,23 @@
+# Python Virtual Environments
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Environment Variables (CRITICAL: Never push your keys!)
+.env
+
+# Blockchain / Hardhat
+artifacts/
+cache/
+node_modules/
+typechain-types/
+
+# macOS / Windows System Files
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
