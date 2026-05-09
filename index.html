@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VeriTrade AI — Global Trade Compliance on the Blockchain</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Tailwind CDN for utility overrides -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ethers.js v6 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ NAV -->
+<nav class="nav">
+  <a class="nav-logo" onclick="showSection('landing')" style="cursor:pointer">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+      <polyline points="2 17 12 22 22 17"/>
+      <polyline points="2 12 12 17 22 12"/>
+    </svg>
+    Veri<span class="logo-accent">Trade</span> <span style="font-weight:400;color:var(--muted);font-size:0.9rem">AI</span>
+  </a>
+
+  <div class="nav-links">
+    <button class="nav-link" onclick="showSection('submit')">Submit Manifest</button>
+    <button class="nav-link" onclick="showSection('verify')">Verify</button>
+    <!-- Wallet -->
+    <button class="nav-cta" id="wallet-connect-btn" onclick="connectWallet()">Connect Wallet</button>
+    <div class="wallet-badge hidden" id="wallet-connected-badge">
+      <span class="wallet-dot"></span>
+      <span id="wallet-address">—</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ LANDING -->
+<section id="section-landing">
+
+  <div class="hero-eyebrow">
+    <span>Ethereum Sepolia</span>
+    <span>·</span>
+    <span>SHA-256 Anchored</span>
+    <span>·</span>
+    <span>AI Compliance Engine</span>
+  </div>
+
+  <h1 class="hero-title">Verifying the World's<br>Supply Chain</h1>
+
+  <p class="hero-sub">
+    VeriTrade AI anchors every trade compliance decision to the Ethereum blockchain —
+    creating tamper-proof, cryptographically verifiable audit trails for the global economy.
+  </p>
+
+  <div class="hero-ctas">
+    <button class="btn-primary" onclick="showSection('submit')">
+      Submit a Manifest
+    </button>
+    <button class="btn-ghost" onclick="document.getElementById('arch-section').scrollIntoView({behavior:'smooth'})">
+      How It Works ↓
+    </button>
+  </div>
+
+  <!-- Live Globe SVG -->
+  <div class="globe-container">
+    <svg class="globe-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer glow ring -->
+      <circle cx="160" cy="160" r="148" fill="none" stroke="rgba(0,229,255,0.08)" stroke-width="2"/>
+      <!-- Globe circles -->
+      <circle cx="160" cy="160" r="130" class="globe-circle"/>
+      <!-- Latitude lines -->
+      <ellipse cx="160" cy="160" rx="130" ry="40" class="globe-meridian"/>
+      <ellipse cx="160" cy="160" rx="130" ry="85" class="globe-meridian"/>
+      <ellipse cx="160" cy="120" rx="100" ry="30" class="globe-meridian"/>
+      <!-- Meridian lines -->
+      <line x1="160" y1="30" x2="160" y2="290" stroke="rgba(0,229,255,0.06)" stroke-width="1"/>
+      <line x1="30"  y1="160" x2="290" y2="160" stroke="rgba(0,229,255,0.06)" stroke-width="1"/>
+      <!-- Trade routes (dashed arcs) -->
+      <path d="M 80,130 Q 160,80 240,140" class="trade-route"/>
+      <path d="M 70,175 Q 160,230 250,170" class="trade-route" style="animation-delay:-3s"/>
+      <path d="M 100,155 Q 160,110 220,155" class="trade-route" style="animation-delay:-6s"/>
+      <!-- Route dots -->
+      <circle cx="80"  cy="130" r="4" class="trade-route-dot"/>
+      <circle cx="240" cy="140" r="4" class="trade-route-dot" style="animation-delay:0.5s"/>
+      <circle cx="70"  cy="175" r="4" class="trade-route-dot" style="animation-delay:1s"/>
+      <circle cx="250" cy="170" r="4" class="trade-route-dot" style="animation-delay:1.5s"/>
+      <circle cx="160" cy="95"  r="5" class="trade-route-dot" style="animation-delay:0.8s"/>
+      <!-- Center glow -->
+      <circle cx="160" cy="160" r="6" fill="var(--cyan)" opacity="0.8" filter="drop-shadow(0 0 8px var(--cyan))"/>
+    </svg>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-value" id="stat-shipments">0</span>
+      <span class="stat-label">Shipments Assessed</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-hashes">0</span>
+      <span class="stat-label">Hashes On-Chain</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-blocked">0</span>
+      <span class="stat-label">Fraudulent Tamperings Blocked</span>
+    </div>
+  </div>
+
+  <!-- Architecture Section -->
+  <div id="arch-section" style="width:100%;max-width:1000px;margin:5rem auto 0;padding:0 2rem;">
+    <p class="text-mono text-xs text-cyan" style="text-align:center;letter-spacing:.15em;margin-bottom:1rem">THE PIPELINE</p>
+    <h2 class="section-title">From Manifest to Immutable Proof</h2>
+    <p class="section-sub">Four layers of trust working in concert</p>
+
+    <!-- Pipeline visual -->
+    <div class="pipeline">
+      <div class="pipe-step active">📄 Manifest</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">🤖 AI Engine</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">🔐 SHA-256</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">⛓ Ethereum</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step active">✅ Verified</div>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-card-icon">🌍</div>
+        <div class="arch-card-title">Global Risk Matrix</div>
+        <div class="arch-card-text">Rules-based AI screens origin countries, conflict minerals, and ESG certifications against international sanctions databases and UN conflict mineral registries.</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">🤖</div>
+        <div class="arch-card-title">AI Reasoning Engine</div>
+        <div class="arch-card-text">Generates a natural-language reasoning log for every decision — explaining each flag and mitigation factor so customs agents understand the verdict.</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">🔐</div>
+        <div class="arch-card-title">Cryptographic Fingerprint</div>
+        <div class="arch-card-text">The AI audit record is canonically serialised (sorted keys) and hashed with SHA-256 — creating a deterministic fingerprint immune to formatting attacks.</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">⛓</div>
+        <div class="arch-card-title">Ethereum Immutability</div>
+        <div class="arch-card-text">The hash is stored in a Solidity smart contract on Ethereum Sepolia. Once anchored, no human can alter the record without blockchain consensus.</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:3rem">
+      <button class="btn-primary" onclick="showSection('submit')">
+        Begin Trade Assessment →
+      </button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════════ SUBMIT MANIFEST -->
+<section id="section-submit" class="hidden">
+  <div style="max-width:860px;margin:0 auto;padding:100px 2rem 4rem">
+
+    <p class="text-mono text-xs text-cyan" style="letter-spacing:.15em;margin-bottom:0.5rem">STEP 1 OF 4</p>
+    <h2 class="section-title" style="text-align:left">Submit Shipping Manifest</h2>
+    <p class="text-muted mb-3">Provide the shipment details for AI compliance screening.</p>
+
+    <div class="form-card">
+      <form id="manifest-form">
+        <div class="form-grid">
+
+          <!-- Supplier ID -->
+          <div class="form-group">
+            <label for="supplier-id">Supplier ID</label>
+            <input id="supplier-id" type="text" placeholder="e.g. SUP-2024-0047" required />
+          </div>
+
+          <!-- Supplier Name -->
+          <div class="form-group">
+            <label for="supplier-name">Supplier Name *</label>
+            <input id="supplier-name" type="text" placeholder="e.g. Congo Minerals Ltd." required />
+          </div>
+
+          <!-- Origin -->
+          <div class="form-group">
+            <label for="origin-country">Origin Country *</label>
+            <input id="origin-country" type="text" placeholder="e.g. Democratic Republic of Congo" required />
+            <span class="form-hint">High-risk: Russia, Iran, North Korea, Myanmar…</span>
+          </div>
+
+          <!-- Destination -->
+          <div class="form-group">
+            <label for="dest-country">Destination Country *</label>
+            <input id="dest-country" type="text" placeholder="e.g. Germany" required />
+          </div>
+
+          <!-- Cargo -->
+          <div class="form-group full">
+            <label for="cargo-items">Cargo Composition *</label>
+            <input id="cargo-items" type="text" placeholder="Cobalt, Tantalum, Recycled Steel" required />
+            <span class="form-hint">Comma-separated. Conflict minerals: Cobalt, Tantalum, Tungsten, Tin, Gold, Diamonds…</span>
+          </div>
+
+          <!-- ESG -->
+          <div class="form-group full">
+            <label for="esg-certs">ESG Certifications</label>
+            <input id="esg-certs" type="text" placeholder="ISO-14001, Fair Trade, RMI (Responsible Minerals)" />
+            <span class="form-hint">Certifications reduce risk score. Leave blank if none.</span>
+          </div>
+
+          <!-- Value -->
+          <div class="form-group">
+            <label for="declared-value">Declared Value (USD) *</label>
+            <input id="declared-value" type="number" placeholder="450000" min="0" required />
+          </div>
+
+          <!-- Weight -->
+          <div class="form-group">
+            <label for="weight-kg">Cargo Weight (kg) *</label>
+            <input id="weight-kg" type="number" placeholder="12000" min="0" required />
+          </div>
+
+          <!-- Vessel ID -->
+          <div class="form-group full">
+            <label for="vessel-id">Vessel / Container ID (optional)</label>
+            <input id="vessel-id" type="text" placeholder="e.g. MSCU-7381920" />
+          </div>
+
+        </div>
+
+        <!-- Quick-fill demo buttons -->
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+          <p class="text-xs text-muted" style="margin-bottom:0.8rem;font-family:var(--font-mono);letter-spacing:.08em">DEMO SCENARIOS:</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <button type="button" class="btn btn-outline text-sm" onclick="fillDemo('clean')">✓ Compliant Shipment</button>
+            <button type="button" class="btn btn-outline text-sm" onclick="fillDemo('flagged')">⚠ High-Risk Shipment</button>
+            <button type="button" class="btn btn-outline text-sm" onclick="fillDemo('review')">ℹ Mixed-Risk Shipment</button>
+          </div>
+        </div>
+
+        <div style="margin-top:1.8rem;display:flex;gap:1rem;align-items:center">
+          <button type="submit" id="submit-btn" class="btn btn-cyan" style="min-width:200px">
+            Run AI Assessment
+          </button>
+          <button type="button" class="btn btn-outline" onclick="showSection('landing')">← Back</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ VERDICT -->
+<section id="section-verdict" class="hidden fade-in">
+  <div style="max-width:960px;margin:0 auto;padding:100px 2rem 4rem">
+
+    <p class="text-mono text-xs text-cyan" style="letter-spacing:.15em;margin-bottom:0.5rem">STEP 2 OF 4 — AI ASSESSMENT COMPLETE</p>
+
+    <div class="verdict-header">
+      <h2 class="section-title" style="text-align:left;margin-bottom:0">Compliance Verdict</h2>
+      <span class="verdict-badge" id="verdict-badge">—</span>
+    </div>
+
+    <!-- Risk Score Ring -->
+    <div class="card">
+      <div class="card-title">Risk Assessment</div>
+      <div class="risk-ring-container">
+        <div style="position:relative;flex-shrink:0">
+          <svg class="risk-ring-svg" viewBox="0 0 120 120">
+            <circle class="risk-ring-track" cx="60" cy="60" r="54"/>
+            <circle id="risk-ring" cx="60" cy="60" r="54"
+              transform="rotate(-90 60 60)"
+              stroke-dasharray="339" stroke-dashoffset="339"
+              stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+            <span id="risk-score-number" style="font-family:var(--font-display);font-size:2rem;font-weight:800">0</span>
+            <span style="display:block;font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);letter-spacing:.08em">/100</span>
+          </div>
+        </div>
+        <div>
+          <p id="v-verdict-detail" style="font-size:1rem;margin-bottom:1.2rem;font-weight:500"></p>
+          <div class="flags-row" id="v-flags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shipment Details -->
+    <div class="card">
+      <div class="card-title">Shipment Details</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Supplier</div><div class="info-value" id="v-supplier">—</div></div>
+        <div class="info-item"><div class="info-label">Origin</div><div class="info-value" id="v-origin">—</div></div>
+        <div class="info-item"><div class="info-label">Destination</div><div class="info-value" id="v-destination">—</div></div>
+        <div class="info-item"><div class="info-label">Timestamp</div><div class="info-value" id="v-timestamp">—</div></div>
+        <div class="info-item"><div class="info-label">Cargo Items</div><div class="info-value" id="v-cargo">—</div></div>
+        <div class="info-item"><div class="info-label">ESG Certifications</div><div class="info-value" id="v-esg">—</div></div>
+      </div>
+    </div>
+
+    <!-- AI Reasoning Log -->
+    <div class="card">
+      <div class="card-title">AI Reasoning Log</div>
+      <div class="reasoning-log" id="reasoning-log">
+        <div class="log-line log-info">Awaiting assessment…</div>
+      </div>
+    </div>
+
+    <!-- Cryptographic Hash -->
+    <div class="card">
+      <div class="card-title">Cryptographic Fingerprint</div>
+      <p class="text-sm text-muted mb-2">
+        This SHA-256 hash is the digital DNA of the AI audit record.
+        Any modification to the underlying data — even a single character — produces a completely different hash.
+      </p>
+
+      <div style="display:flex;gap:0.6rem;margin-bottom:0.6rem">
+        <div style="flex:1">
+          <div class="hash-label">
+            <span>AUDIT ID</span>
+          </div>
+          <div class="hash-value text-mono text-xs" id="audit-id-display" style="color:var(--muted)">—</div>
+        </div>
+      </div>
+
+      <div class="hash-box">
+        <div class="hash-label">
+          <span>SHA-256 AUDIT HASH (Original)</span>
+          <button class="copy-btn" onclick="copyHash()">Copy</button>
+        </div>
+        <div class="hash-value" id="audit-hash-display">—</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <button class="btn btn-cyan" onclick="showSection('anchor')">
+        ⛓ Anchor to Blockchain →
+      </button>
+      <button class="btn btn-outline" onclick="showSection('submit')">
+        ← Submit Another
+      </button>
+    </div>
+
+    <!-- Tamper Simulation (shown on verdict page for demo flow) -->
+    <div class="tamper-section mt-4">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <div class="tamper-title">⚠ Fraud Simulation Engine</div>
+          <p class="text-sm text-muted mt-1">
+            Demonstrates blockchain immutability: modifies the verdict in memory and shows the hash mismatch.
+          </p>
+        </div>
+        <button class="btn btn-amber" id="tamper-btn" onclick="simulateTamper()">
+          Simulate Data Tampering
+        </button>
+      </div>
+
+      <!-- Tamper panel (hidden until activated) -->
+      <div class="tamper-panel hidden" id="tamper-panel">
+        <p class="text-xs text-amber" style="font-family:var(--font-mono);letter-spacing:.1em;margin-bottom:1rem">
+          FRAUD SIMULATION IN PROGRESS
+        </p>
+        <div class="tamper-row">
+          <span class="tamper-key">Original Hash:</span>
+          <span class="tamper-val-ok" id="tamper-original-hash">—</span>
+        </div>
+        <div class="tamper-row">
+          <span class="tamper-key">Fraudulent Verdict:</span>
+          <span class="tamper-val-bad" id="tamper-modified-verdict">—</span>
+        </div>
+        <div class="tamper-row">
+          <span class="tamper-key">Recomputed Hash:</span>
+          <span class="tamper-val-bad" id="tamper-new-hash">—</span>
+        </div>
+        <div class="tamper-row">
+          <span class="tamper-key">Status:</span>
+          <span class="tamper-val-bad" id="tamper-status">—</span>
+        </div>
+      </div>
+
+      <!-- BREACH ALERT -->
+      <div class="breach-alert hidden" id="breach-alert">
+        <div class="breach-title">
+          🚨 CRITICAL: DATA TAMPERING DETECTED
+        </div>
+        <p class="breach-detail">
+          Hash mismatch confirmed. The locally stored audit record has been altered.
+          The Ethereum blockchain record remains authoritative and intact.
+          This fraudulent modification cannot be accepted — blockchain consensus rejects it.
+        </p>
+        <div style="margin-top:1.2rem;display:flex;gap:1rem;align-items:center">
+          <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--red)">
+            BLOCKCHAIN RECORD: IMMUTABLE · LOCAL RECORD: COMPROMISED
+          </span>
+          <button class="btn btn-outline text-sm" onclick="resetTamperSim()">Reset Simulation</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ ANCHOR -->
+<section id="section-anchor" class="hidden fade-in">
+  <div style="max-width:760px;margin:0 auto;padding:100px 2rem 4rem">
+
+    <p class="text-mono text-xs text-cyan" style="letter-spacing:.15em;margin-bottom:0.5rem">STEP 3 OF 4 — BLOCKCHAIN ANCHORING</p>
+    <h2 class="section-title" style="text-align:left">Issue Digital Passport</h2>
+    <p class="text-muted mb-3">
+      Anchor the SHA-256 audit hash to Ethereum Sepolia via your MetaMask wallet.
+      Once confirmed, this record is immutable and globally verifiable.
+    </p>
+
+    <!-- Pre-anchor hash display -->
+    <div class="hash-box mb-3">
+      <div class="hash-label"><span>HASH TO ANCHOR</span></div>
+      <div class="hash-value" id="anchor-hash-preview">—</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MetaMask Signing</div>
+      <p class="text-sm text-muted" style="margin-bottom:1.5rem">
+        Ensure MetaMask is connected to <strong style="color:var(--white)">Ethereum Sepolia Testnet</strong>.
+        The smart contract call stores the hash permanently on-chain and emits a
+        <code style="color:var(--cyan)">HashAnchored</code> event.
+      </p>
+
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <button class="btn btn-cyan" id="anchor-btn" onclick="anchorOnChain()">
+          Anchor Digital Passport
+        </button>
+        <button class="btn btn-outline" onclick="connectWallet()">
+          Connect Wallet
+        </button>
+      </div>
+    </div>
+
+    <!-- Blockchain confirmation (hidden until tx confirmed) -->
+    <div class="card hidden" id="blockchain-confirmed">
+      <div class="card-title" style="color:var(--green)">
+        ✓ On-Chain Confirmed
+      </div>
+      <div class="anchor-status">
+        <div class="anchor-row">
+          <span class="anchor-key">Status</span>
+          <span class="anchor-val">
+            <span class="confirmed-badge">✓ CONFIRMED</span>
+          </span>
+        </div>
+        <div class="anchor-row">
+          <span class="anchor-key">Transaction Hash</span>
+          <span class="anchor-val text-mono text-xs" id="tx-hash-display">—</span>
+        </div>
+        <div class="anchor-row">
+          <span class="anchor-key">Block Number</span>
+          <span class="anchor-val" id="block-number-display">—</span>
+        </div>
+        <div class="anchor-row">
+          <span class="anchor-key">Network</span>
+          <span class="anchor-val text-cyan">Ethereum Sepolia Testnet</span>
+        </div>
+        <div class="anchor-row">
+          <span class="anchor-key">Block Explorer</span>
+          <span class="anchor-val">
+            <a id="sepolia-explorer-link" class="explorer-link" href="#" target="_blank" rel="noopener">
+              <span id="sepolia-link-text">View on Etherscan →</span>
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap">
+        <button class="btn btn-cyan" onclick="prefillVerify()">
+          Verify Integrity →
+        </button>
+        <button class="btn btn-outline" onclick="showSection('verdict')">
+          ← Back to Verdict
+        </button>
+      </div>
+    </div>
+
+    <!-- Simulated anchor (no MetaMask) -->
+    <div class="card" style="border-color:rgba(0,229,255,0.2)">
+      <div class="card-title text-cyan">Demo Mode (No MetaMask Required)</div>
+      <p class="text-sm text-muted mb-2">
+        For hackathon judges without MetaMask: simulate a confirmed anchor using a pre-computed demo transaction.
+      </p>
+      <button class="btn btn-outline text-sm" onclick="simulateAnchor()">
+        Simulate Blockchain Anchor
+      </button>
+    </div>
+
+    <div style="margin-top:1.5rem">
+      <button class="btn btn-outline" onclick="showSection('verdict')">← Back</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ VERIFY -->
+<section id="section-verify" class="hidden fade-in">
+  <div style="max-width:760px;margin:0 auto;padding:100px 2rem 4rem">
+
+    <p class="text-mono text-xs text-cyan" style="letter-spacing:.15em;margin-bottom:0.5rem">STEP 4 OF 4 — REGULATOR PORTAL</p>
+    <h2 class="section-title" style="text-align:left">Verify Trade Compliance</h2>
+    <p class="text-muted mb-3">
+      Customs agents and regulators can independently verify any audit record's integrity
+      by querying the Ethereum blockchain directly — no trusted intermediary required.
+    </p>
+
+    <div class="card">
+      <div class="card-title">Blockchain Lookup</div>
+      <div class="form-group mb-3">
+        <label for="verify-hash-input">SHA-256 Audit Hash</label>
+        <input id="verify-hash-input" type="text"
+          placeholder="Enter 64-character hex hash…"
+          style="font-family:var(--font-mono);font-size:0.8rem"
+        />
+        <span class="form-hint">Paste the hash from the AI audit record to verify on-chain status.</span>
+      </div>
+      <button class="btn btn-cyan" id="verify-btn" onclick="verifyHash()">
+        Verify on Blockchain
+      </button>
+    </div>
+
+    <!-- Verification success -->
+    <div class="verify-result-ok hidden mt-3" id="verify-success">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem">
+        <span style="font-size:2rem">✅</span>
+        <div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--green)">
+            VERIFIED — On-Chain Integrity Confirmed
+          </div>
+          <div class="text-sm text-muted">Hash found in the VeriTrade Registry smart contract</div>
+        </div>
+      </div>
+      <div class="anchor-status" style="background:var(--navy-950);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+        <div class="anchor-row"><span class="anchor-key">Anchored By</span><span class="anchor-val text-mono text-xs" id="v2-anchored-by">—</span></div>
+        <div class="anchor-row"><span class="anchor-key">Block Number</span><span class="anchor-val" id="v2-block">—</span></div>
+        <div class="anchor-row"><span class="anchor-key">Anchored At</span><span class="anchor-val" id="v2-timestamp">—</span></div>
+        <div class="anchor-row"><span class="anchor-key">Recorded Verdict</span><span class="anchor-val" id="v2-verdict">—</span></div>
+      </div>
+    </div>
+
+    <!-- Verification fail (tampered or not found) -->
+    <div class="verify-result-fail hidden mt-3" id="verify-fail">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:2rem">❌</span>
+        <div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--red)">
+            NOT FOUND — Hash Not On-Chain
+          </div>
+          <div class="text-sm" style="color:#f9a8a8;margin-top:0.3rem">
+            This hash has not been anchored, or the data has been tampered with.
+            The blockchain record does not match. Reject this shipment.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="showSection('landing')">← Home</button>
+      <button class="btn btn-outline" onclick="showSection('submit')">Submit New Manifest</button>
+    </div>
+
+  </div>
+</section>
+
+
+
+<script>
+  /**
+   * Demo fill helpers — populate the form with realistic scenarios
+   * for live hackathon demonstration.
+   */
+  const DEMO_SCENARIOS = {
+    clean: {
+      supplier_id: 'SUP-2024-0012',
+      supplier_name: 'Nordic Green Steel GmbH',
+      origin_country: 'Sweden',
+      destination_country: 'South Korea',
+      cargo_items: 'Recycled Steel, Aluminium',
+      esg_certs: 'ISO-14001, Carbon Neutral Certified, SA8000 (Social Accountability)',
+      value: '320000',
+      weight: '8500',
+      vessel: 'MAEU-4821037',
+    },
+    flagged: {
+      supplier_id: 'SUP-2024-0099',
+      supplier_name: 'Eastern Resources LLC',
+      origin_country: 'Russia',
+      destination_country: 'United States',
+      cargo_items: 'Cobalt, Tantalum, Gold',
+      esg_certs: '',
+      value: '1850000',
+      weight: '22000',
+      vessel: 'CMAU-9192817',
+    },
+    review: {
+      supplier_id: 'SUP-2024-0055',
+      supplier_name: 'Congo Minerals Cooperative',
+      origin_country: 'Democratic Republic of Congo',
+      destination_country: 'Germany',
+      cargo_items: 'Cobalt, Tin',
+      esg_certs: 'RMI (Responsible Minerals), Fair Trade',
+      value: '780000',
+      weight: '14000',
+      vessel: 'MSCU-7381920',
+    },
+  };
+
+  function fillDemo(type) {
+    const d = DEMO_SCENARIOS[type];
+    if (!d) return;
+    document.getElementById('supplier-id').value    = d.supplier_id;
+    document.getElementById('supplier-name').value  = d.supplier_name;
+    document.getElementById('origin-country').value = d.origin_country;
+    document.getElementById('dest-country').value   = d.destination_country;
+    document.getElementById('cargo-items').value    = d.cargo_items;
+    document.getElementById('esg-certs').value      = d.esg_certs;
+    document.getElementById('declared-value').value = d.value;
+    document.getElementById('weight-kg').value      = d.weight;
+    document.getElementById('vessel-id').value      = d.vessel;
+    showToast(`Loaded: ${type === 'clean' ? 'Compliant' : type === 'flagged' ? 'High-Risk' : 'Mixed-Risk'} scenario`, 'info');
+  }
+
+  /** Populate anchor hash preview when anchor section shown */
+  const _origShowSection = showSection;
+  function showSection(name) {
+    _origShowSection(name);
+    if (name === 'anchor' && State.auditHash) {
+      document.getElementById('anchor-hash-preview').textContent = State.auditHash;
+    }
+  }
+
+  /** Simulated anchor for demo mode (no MetaMask) */
+  function simulateAnchor() {
+    const fakeTx    = '0x' + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    const fakeBlock = Math.floor(Math.random() * 1000000) + 5000000;
+
+    document.getElementById('tx-hash-display').textContent    = fakeTx;
+    document.getElementById('block-number-display').textContent = fakeBlock.toString();
+    document.getElementById('sepolia-link-text').textContent  = fakeTx.slice(0,24) + '…';
+    document.getElementById('sepolia-explorer-link').href     = `https://sepolia.etherscan.io/tx/${fakeTx}`;
+    document.getElementById('blockchain-confirmed').classList.remove('hidden');
+
+    showToast('Demo anchor simulated. In production, MetaMask signs the real transaction.', 'info');
+  }
+</script>
+<script>
+  /**
+ * VeriTrade AI — Frontend Application
+ * Blockchain-Backed Trade Compliance Platform
+ *
+ * Architecture:
+ *   1. ManifestForm   → Submit shipping data to FastAPI backend
+ *   2. AIEngine       → Display risk verdict + reasoning log
+ *   3. CryptoLayer    → Generate & display SHA-256 audit hash
+ *   4. BlockchainLayer→ Anchor hash via MetaMask / ethers.js
+ *   5. VerifyLayer    → Regulators confirm on-chain integrity
+ *   6. TamperSim      → Demonstrate blockchain immutability
+ */
+
+'use strict';
+
+// ─── CONFIG ─────────────────────────────────────────────────────────────────
+
+const CONFIG = {
+  API_BASE: 'http://127.0.0.1:8000',
+  // Deployed contract address on Sepolia — update after `npx hardhat deploy`
+  CONTRACT_ADDRESS: '0x551abC80669E61090FCd652C48ac45114d6a3690',
+  // Minimal ABI — only the functions the frontend needs
+  CONTRACT_ABI: [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "auditHash",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "attemptedBy",
+				"type": "address"
+			}
+		],
+		"name": "DuplicateAnchorAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "auditHash",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "anchoredBy",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "supplierName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "verdict",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "HashAnchored",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hexHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "_supplierName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_verdict",
+				"type": "string"
+			}
+		],
+		"name": "anchorHash",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "auditRecords",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "anchoredBy",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "blockNumber",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "supplierName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "verdict",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hexHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "isAnchored",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalAnchored",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hexHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "verifyHash",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "anchoredBy",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "blockNumber",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "verdict",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+],
+};
+
+// ─── APP STATE ───────────────────────────────────────────────────────────────
+
+const State = {
+  auditRecord: null,       // The AI-generated audit JSON
+  auditHash: null,         // Original SHA-256 hex string
+  provider: null,          // ethers.js provider
+  signer: null,            // Connected wallet signer
+  contract: null,          // ethers Contract instance
+  walletAddress: null,     // Connected wallet address
+  anchorTxHash: null,      // Blockchain tx hash after anchoring
+};
+
+// ─── UTILITY ─────────────────────────────────────────────────────────────────
+
+const $ = (id) => document.getElementById(id);
+const show = (id) => { const el = $(id); if (el) el.classList.remove('hidden'); };
+const hide = (id) => { const el = $(id); if (el) el.classList.add('hidden'); };
+const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
+const setHTML = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+
+/** Format timestamp to locale string */
+const formatDate = (isoStr) => new Date(isoStr).toLocaleString();
+
+/** Truncate a hash for display */
+const shortHash = (h, len = 16) => h ? `${h.slice(0, len)}...${h.slice(-8)}` : '—';
+
+/** Animate a counter from 0 to target */
+function animateCounter(el, target, duration = 1200) {
+  const start = performance.now();
+  const update = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target);
+    if (t < 1) requestAnimationFrame(update);
+    else el.textContent = target;
+  };
+  requestAnimationFrame(update);
+}
+
+// ─── SECTION NAVIGATION ──────────────────────────────────────────────────────
+
+const SECTIONS = ['landing', 'submit', 'verdict', 'anchor', 'verify'];
+
+function showSection(name) {
+  SECTIONS.forEach(s => {
+    const el = $(`section-${s}`);
+    if (el) el.classList.toggle('hidden', s !== name);
+  });
+  // Scroll to top of section
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── LANDING ANIMATIONS ──────────────────────────────────────────────────────
+
+function initLanding() {
+  // Animate trade-route dots on the SVG globe
+  const dots = document.querySelectorAll('.trade-route-dot');
+  dots.forEach((dot, i) => {
+    dot.style.animationDelay = `${i * 0.4}s`;
+  });
+
+  // Stats counters
+  const counters = [
+    { id: 'stat-shipments', val: 2847 },
+    { id: 'stat-hashes',    val: 2847 },
+    { id: 'stat-blocked',   val: 134  },
+  ];
+  counters.forEach(c => {
+    const el = $(c.id);
+    if (el) setTimeout(() => animateCounter(el, c.val), 600);
+  });
+}
+
+// ─── WALLET CONNECTION ────────────────────────────────────────────────────────
+
+async function connectWallet() {
+  if (typeof window.ethereum === 'undefined') {
+    showToast('MetaMask not detected. Please install MetaMask to anchor hashes.', 'error');
+    return false;
+  }
+  try {
+    // Request account access
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    State.provider = new ethers.BrowserProvider(window.ethereum);
+    State.signer   = await State.provider.getSigner();
+    State.walletAddress = await State.signer.getAddress();
+
+    // Instantiate the contract
+    State.contract = new ethers.Contract(
+      CONFIG.CONTRACT_ADDRESS,
+      CONFIG.CONTRACT_ABI,
+      State.signer
+    );
+
+    // Update UI
+    setText('wallet-address', shortHash(State.walletAddress, 10));
+    show('wallet-connected-badge');
+    hide('wallet-connect-btn');
+
+    showToast(`Wallet connected: ${shortHash(State.walletAddress)}`, 'success');
+    return true;
+  } catch (err) {
+    console.error('Wallet connection failed:', err);
+    showToast('Wallet connection rejected.', 'error');
+    return false;
+  }
+}
+
+// ─── MANIFEST SUBMISSION ─────────────────────────────────────────────────────
+
+async function submitManifest(e) {
+  e.preventDefault();
+
+  // Collect form values
+  const cargoRaw = $('cargo-items').value;
+  const esgRaw   = $('esg-certs').value;
+
+  const payload = {
+    supplier_id:          $('supplier-id').value.trim(),
+    supplier_name:        $('supplier-name').value.trim(),
+    origin_country:       $('origin-country').value.trim(),
+    destination_country:  $('dest-country').value.trim(),
+    cargo_items:          cargoRaw.split(',').map(s => s.trim()).filter(Boolean),
+    esg_certifications:   esgRaw.split(',').map(s => s.trim()).filter(Boolean),
+    declared_value_usd:   parseFloat($('declared-value').value),
+    weight_kg:            parseFloat($('weight-kg').value),
+    vessel_id:            $('vessel-id').value.trim() || null,
+  };
+
+  // Basic validation
+  if (!payload.supplier_name || !payload.origin_country || !payload.destination_country) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  // Show loading state
+  const btn = $('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Analysing Manifest…`;
+
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/assess`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+    const data = await res.json();
+    State.auditRecord = data.audit_record;
+    State.auditHash   = data.audit_hash;
+
+    renderVerdict(data);
+    showSection('verdict');
+
+  } catch (err) {
+    console.error('Assessment failed:', err);
+    showToast(`Assessment failed: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Run AI Assessment`;
+  }
+}
+
+// ─── VERDICT RENDERING ────────────────────────────────────────────────────────
+
+function renderVerdict(data) {
+  const record  = data.audit_record;
+  const verdict = record.verdict;
+
+  // Risk score ring
+  const score = record.risk_score;
+  const ring  = $('risk-ring');
+  const scoreEl = $('risk-score-number');
+  if (ring) {
+    const circumference = 2 * Math.PI * 54; // r=54
+    const offset = circumference * (1 - score / 100);
+    ring.style.strokeDasharray  = circumference;
+    ring.style.strokeDashoffset = circumference; // start at 0
+    ring.style.stroke = score >= 60 ? '#ef4444' : score >= 30 ? '#f59e0b' : '#10b981';
+    setTimeout(() => {
+      ring.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
+      ring.style.strokeDashoffset = offset;
+    }, 100);
+  }
+  if (scoreEl) setTimeout(() => animateCounter(scoreEl, score), 200);
+
+  // Verdict badge
+  const badgeEl = $('verdict-badge');
+  if (badgeEl) {
+    badgeEl.textContent = verdict;
+    badgeEl.className = `verdict-badge verdict-${verdict.toLowerCase()}`;
+  }
+
+  // Supplier info
+  setText('v-supplier',    record.supplier_name);
+  setText('v-origin',      record.origin_country);
+  setText('v-destination', record.destination_country);
+  setText('v-cargo',       record.cargo_items.join(', '));
+  setText('v-esg',         record.esg_certifications.length ? record.esg_certifications.join(', ') : 'None declared');
+  setText('v-timestamp',   formatDate(record.timestamp_utc));
+  setText('v-verdict-detail', record.verdict_detail);
+
+  // Flags
+  const flagsEl = $('v-flags');
+  if (flagsEl) {
+    flagsEl.innerHTML = record.flags.length
+      ? record.flags.map(f =>
+          `<span class="flag-chip">${f.replace(/_/g, ' ')}</span>`
+        ).join('')
+      : '<span class="flag-chip flag-clear">NO FLAGS</span>';
+  }
+
+  // Reasoning log
+  const logEl = $('reasoning-log');
+  if (logEl) {
+    logEl.innerHTML = record.reasoning_log
+      .map(line => {
+        const cls = line.startsWith('⚠') ? 'log-warn'
+                  : line.startsWith('✓') ? 'log-ok'
+                  : 'log-info';
+        return `<div class="log-line ${cls}">${line}</div>`;
+      })
+      .join('');
+  }
+
+  // Hash display
+  setText('audit-hash-display', data.audit_hash);
+  setText('audit-id-display',   record.audit_id);
+
+  // Store for tamper simulation
+  $('tamper-original-hash').textContent = data.audit_hash;
+}
+
+// ─── BLOCKCHAIN ANCHOR ────────────────────────────────────────────────────────
+
+async function anchorOnChain() {
+  if (!State.auditRecord || !State.auditHash) {
+    showToast('No audit record found. Please assess a manifest first.', 'error');
+    return;
+  }
+
+  // Ensure wallet is connected
+  if (!State.signer) {
+    const connected = await connectWallet();
+    if (!connected) return;
+  }
+
+  const btn = $('anchor-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Anchoring to Blockchain…`;
+
+  try {
+    /**
+     * Convert the hex SHA-256 string to bytes32 for Solidity.
+     * ethers.js: `ethers.id()` is keccak256 of a string — NOT what we want.
+     * We need to treat our hex hash as raw bytes32.
+     * Correct approach: prepend "0x" and pass as bytes32 hex literal.
+     */
+    const hashBytes32 = '0x' + State.auditHash;
+
+    // Call the smart contract
+    const tx = await State.contract.anchorHash(
+      hashBytes32,
+      State.auditRecord.supplier_name,
+      State.auditRecord.verdict
+    );
+
+    showToast('Transaction submitted. Waiting for confirmation…', 'info');
+
+    // Wait for 1 confirmation
+    const receipt = await tx.wait(1);
+    State.anchorTxHash = receipt.hash;
+
+    // Update UI
+    setText('tx-hash-display',    receipt.hash);
+    setText('block-number-display', receipt.blockNumber);
+    setText('tx-status',          'CONFIRMED');
+    show('blockchain-confirmed');
+    setText('sepolia-link-text',  shortHash(receipt.hash, 20));
+    $('sepolia-explorer-link').href = `https://sepolia.etherscan.io/tx/${receipt.hash}`;
+
+    showToast('Hash anchored on Ethereum Sepolia! 🎉', 'success');
+
+  } catch (err) {
+    console.error('Blockchain anchor error:', err);
+    // Contract already has this hash — simulate as "already verified"
+    if (err.message.includes('already anchored')) {
+      showToast('Hash already on-chain — record is immutable.', 'info');
+    } else {
+      showToast(`Blockchain error: ${err.message.slice(0, 80)}`, 'error');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Anchor Digital Passport`;
+  }
+}
+
+// ─── TAMPER SIMULATION ────────────────────────────────────────────────────────
+
+async function simulateTamper() {
+  if (!State.auditRecord || !State.auditHash) {
+    showToast('No audit record to tamper. Submit a manifest first.', 'error');
+    return;
+  }
+
+  const btn = $('tamper-btn');
+  btn.disabled = true;
+
+  // Step 1: Show the original clean record
+  setText('tamper-original-hash', State.auditHash);
+  setText('tamper-status', 'Injecting fraudulent data…');
+  show('tamper-panel');
+
+  await sleep(1200);
+
+  // Step 2: Corrupt the audit record in memory
+  const corruptedRecord = JSON.parse(JSON.stringify(State.auditRecord));
+  corruptedRecord.verdict    = 'CLEARED';          // Flip the verdict
+  corruptedRecord.risk_score = 12;                 // Fake a low score
+  corruptedRecord.flags      = [];                 // Erase all flags
+  corruptedRecord.reasoning_log.unshift(
+    '✓ [FRAUDULENT] All compliance checks passed. Manually overridden.'
+  );
+
+  setText('tamper-modified-verdict', 'CLEARED (fraudulently)');
+  setText('tamper-status', 'Recalculating hash of corrupted record…');
+
+  await sleep(1000);
+
+  // Step 3: Re-hash the corrupted record via the backend
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        original_hash: State.auditHash,
+        audit_record:  corruptedRecord,
+      }),
+    });
+    const verification = await res.json();
+
+    setText('tamper-new-hash', verification.recomputed_hash);
+
+    await sleep(800);
+
+    // Step 4: MISMATCH detected — trigger breach alert
+    if (verification.tamper_detected) {
+      $('tamper-status').textContent = '';
+      show('breach-alert');
+      document.body.classList.add('breach-mode');
+      setTimeout(() => document.body.classList.remove('breach-mode'), 4000);
+      showToast('CRITICAL: BLOCKCHAIN INTEGRITY VIOLATION DETECTED', 'error');
+    }
+
+  } catch (err) {
+    showToast(`Verification error: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function resetTamperSim() {
+  hide('tamper-panel');
+  hide('breach-alert');
+  setText('tamper-status', '');
+  setText('tamper-modified-verdict', '');
+  setText('tamper-new-hash', '');
+}
+
+// ─── VERIFICATION PANEL ───────────────────────────────────────────────────────
+
+async function verifyHash() {
+  const hashInput = $('verify-hash-input').value.trim();
+  if (!hashInput || hashInput.length !== 64) {
+    showToast('Please enter a valid 64-character SHA-256 hash.', 'error');
+    return;
+  }
+
+  const btn = $('verify-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Querying Blockchain…`;
+
+  try {
+    if (!State.provider) {
+      State.provider = new ethers.BrowserProvider(window.ethereum);
+    }
+    const contract = new ethers.Contract(
+      CONFIG.CONTRACT_ADDRESS,
+      CONFIG.CONTRACT_ABI,
+      State.provider
+    );
+
+    const result = await contract.verifyHash('0x' + hashInput);
+    const [exists, anchoredBy, blockNum, timestamp, verdict] = result;
+
+    if (exists) {
+      show('verify-success');
+      hide('verify-fail');
+      setText('v2-anchored-by', anchoredBy);
+      setText('v2-block',       blockNum.toString());
+      setText('v2-timestamp',   new Date(Number(timestamp) * 1000).toLocaleString());
+      setText('v2-verdict',     verdict);
+    } else {
+      hide('verify-success');
+      show('verify-fail');
+    }
+
+  } catch (err) {
+    console.error('Verification error:', err);
+    showToast('Blockchain query failed. Ensure MetaMask is on Sepolia network.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Verify on Blockchain`;
+  }
+}
+
+// Pre-fill the verify field from State
+function prefillVerify() {
+  if (State.auditHash) {
+    $('verify-hash-input').value = State.auditHash;
+  }
+  showSection('verify');
+}
+
+// ─── TOAST NOTIFICATIONS ──────────────────────────────────────────────────────
+
+function showToast(message, type = 'info') {
+  const container = $('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <span class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add('toast-visible'), 10);
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Copy hash to clipboard
+function copyHash() {
+  if (!State.auditHash) return;
+  navigator.clipboard.writeText(State.auditHash)
+    .then(() => showToast('Hash copied to clipboard', 'success'))
+    .catch(() => showToast('Copy failed', 'error'));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize landing page animations
+  initLanding();
+
+  // Show landing section by default
+  showSection('landing');
+
+  // Attach form submission
+  const form = $('manifest-form');
+  if (form) form.addEventListener('submit', submitManifest);
+
+  // Populate dropdowns from risk matrix (optional — uses static defaults)
+  fetch(`${CONFIG.API_BASE}/api/risk-matrix`)
+    .then(r => r.json())
+    .then(data => {
+      // Could populate datalist suggestions from data
+      console.log('Risk matrix loaded:', data);
+    })
+    .catch(() => console.warn('Backend offline — running in demo mode'));
+
+  // MetaMask account change listener
+  if (window.ethereum) {
+    window.ethereum.on('accountsChanged', (accounts) => {
+      if (accounts.length === 0) {
+        State.signer = null;
+        State.walletAddress = null;
+        hide('wallet-connected-badge');
+        show('wallet-connect-btn');
+      }
+    });
+  }
+});
+
+</script>
+
+</body>
+</html>
