@@ -11,6 +11,7 @@ import hashlib
 import json
 import datetime
 import uuid
+import requests
 
 app = FastAPI(title="VeriTrade AI Compliance Engine", version="1.0.0")
 
@@ -206,11 +207,21 @@ def sha256_of_record(record: dict) -> str:
 # ─────────────────────────────────────────────
 # ROUTES
 # ─────────────────────────────────────────────
-
 @app.get("/")
 def root():
     return {"service": "VeriTrade AI Compliance Engine", "status": "operational"}
 
+NOAH_API_KEY = "YOUR_NOAH_AI_KEY_HERE"
+
+async def get_noah_analysis(manifest_data):
+    # This sends your trade info to Noah AI
+    url = "https://api.trynoah.ai/v1/analyze" # Replace with their actual endpoint
+    headers = {"Authorization": f"Bearer {NOAH_API_KEY}"}
+    
+    prompt = f"Analyze this trade for ethical risks and Solana ecosystem compliance: {manifest_data}"
+    
+    response = requests.post(url, headers=headers, json={"prompt": prompt})
+    return response.json()
 
 @app.post("/api/assess")
 def assess_manifest(manifest: ManifestInput):
