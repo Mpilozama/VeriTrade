@@ -18,7 +18,7 @@ app = FastAPI(title="VeriTrade AI Compliance Engine", version="1.0.0")
 load_dotenv()
 NOAH_API_KEY = os.getenv("NOAH_API_KEY")
 
-
+  
 # Allow all origins for hackathon demo
 app.add_middleware(
     CORSMiddleware,
@@ -178,25 +178,56 @@ def compute_risk(manifest: ManifestInput) -> dict:
 async def get_noah_insights(manifest: ManifestInput):
     """Calls Noah AI for deep ethical reasoning and vibe-checks."""
     if not NOAH_API_KEY:
-        return {"score": 0, "reason": "Noah AI not configured."}
+        return {"score": 0, "reason": "⚠️ Noah AI not configured. Add NOAH_API_KEY to .env file"}
 
     # Custom prompt for the trade use-case
     prompt = f"Analyze ethical risk for: {manifest.cargo_items} from {manifest.origin_country}."
     
-    # Check trynoah.ai docs for the exact endpoint URL provided in the hackathon
-    url = "https://api.trynoah.ai/v1/analyze" 
-    headers = {"Authorization": f"Bearer {NOAH_API_KEY}"}
+    # Try multiple possible endpoints
+    endpoints = [
+        "https://api.trynoah.ai/v1/analyze",
+        "https://api.trynoah.ai/v1/chat/completions",
+        "https://api.trynoah.ai/v1/completions"
+    ]
     
-    try:
-        response = requests.post(url, headers=headers, json={"prompt": prompt}, timeout=5)
-        data = response.json()
-        return {
-            "score": data.get("risk_boost", 10), # Added risk if AI finds a loophole
-            "reason": data.get("explanation", "AI suggests high scrutiny for this route.")
-        }
-    except:
-        return {"score": 0, "reason": "Noah AI offline, using rule-based logic only."}
-
+    for url in endpoints:
+        headers = {"Authorization": f"Bearer {NOAH_API_KEY}", "Content-Type": "application/json"}
+        
+        # Try different payload formats
+        payloads = [
+            {"prompt": prompt},
+            {"messages": [{"role": "user", "content": prompt}]},
+            {"input": prompt}
+        ]
+        
+        for payload in payloads:
+            try:
+                print(f"Trying: {url} with payload type: {list(payload.keys())}")
+                response = requests.post(url, headers=headers, json=payload, timeout=5)
+                print(f"Response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    # Try to extract the response from different formats
+                    explanation = (
+                        data.get("explanation") or 
+                        data.get("text") or 
+                        data.get("response") or
+                        data.get("choices", [{}])[0].get("message", {}).get("content") or
+                        data.get("choices", [{}])[0].get("text") or
+                        str(data)
+                    )
+                    return {"score": 0, "reason": explanation[:500]}
+                else:
+                    print(f"Failed with status {response.status_code}: {response.text[:200]}")
+                    
+            except requests.exceptions.Timeout:
+                print(f"Timeout on {url}")
+            except Exception as e:
+                print(f"Error on {url}: {str(e)}")
+    
+    # If all attempts fail, return a helpful error message
+    return {"score": 0, "reason": "⚠️ Noah AI connection failed. Check: 1) API key validity 2) Internet connection 3) Correct API endpoint URL"}
 
 def build_audit_record(manifest: ManifestInput, risk_result: dict) -> dict:
     """
