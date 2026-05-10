@@ -307,6 +307,23 @@
       </div>
     </div>
 
+
+    <!-- AI Insight Panel - Noah AI Deep Reasoning -->
+    <div class="result-card" id="ai-insight-card">
+      
+      <h3><span>🧠</span> Noah AI · Deep Ethical Reasoning</h3>
+      <div class="ai-insight-content" id="ai-insight-text">
+        <div class="ai-insight-body">
+          <span class="ai-insight-icon">🤖</span>
+          <span class="ai-insight-prose" id="ai-insight-prose">Analyzing shipment ethics...</span>
+        </div>
+        <div class="ai-insight-footer">
+          <span class="ai-insight-label">Powered by Noah AI · Real-time Ethical Scoring</span>
+          <span class="ai-insight-dot"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Cryptographic Hash -->
     <div class="card">
       <div class="card-title">Cryptographic Fingerprint</div>
@@ -627,13 +644,7 @@
   }
 
   /** Populate anchor hash preview when anchor section shown */
-  const _origShowSection = showSection;
-  function showSection(name) {
-    _origShowSection(name);
-    if (name === 'anchor' && State.auditHash) {
-      document.getElementById('anchor-hash-preview').textContent = State.auditHash;
-    }
-  }
+  // anchor-hash-preview is populated inside showSection in the main script
 
   /** Simulated anchor for demo mode (no MetaMask) */
   function simulateAnchor() {
@@ -942,7 +953,10 @@ function showSection(name) {
     const el = $(`section-${s}`);
     if (el) el.classList.toggle('hidden', s !== name);
   });
-  // Scroll to top of section
+  if (name === 'anchor' && State.auditHash) {
+    const preview = document.getElementById('anchor-hash-preview');
+    if (preview) preview.textContent = State.auditHash;
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1119,6 +1133,31 @@ function renderVerdict(data) {
         return `<div class="log-line ${cls}">${line}</div>`;
       })
       .join('');
+  }
+
+  // AI Insight Panel
+  const aiBox = $('ai-insight-text');
+  if (aiBox) {
+    const insightText = (data.ai_insight && data.ai_insight.trim())
+      ? data.ai_insight.trim()
+      : 'AI analysis unavailable for this shipment.';
+    aiBox.innerHTML = `
+      <div class="ai-insight-body">
+        <span class="ai-insight-icon">&#129504;</span>
+        <span class="ai-insight-prose" id="ai-insight-prose"></span>
+      </div>
+      <div class="ai-insight-footer">
+        <span class="ai-insight-label">Powered by Noah AI &middot; Deep Ethical Reasoning</span>
+        <span class="ai-insight-dot"></span>
+      </div>`;
+    const proseEl = $('ai-insight-prose');
+    proseEl.classList.add('ai-typing');
+    let i = 0;
+    function typeChar() {
+      if (i < insightText.length) { proseEl.textContent += insightText[i++]; setTimeout(typeChar, 16); }
+      else { proseEl.classList.remove('ai-typing'); }
+    }
+    setTimeout(typeChar, 250);
   }
 
   // Hash display

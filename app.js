@@ -410,18 +410,18 @@ async function submitManifest(e) {
 // ─── VERDICT RENDERING ────────────────────────────────────────────────────────
 
 function renderVerdict(data) {
-  const record  = data.audit_record;
+  const record = data.audit_record;
   const verdict = record.verdict;
 
   // Risk score ring
   const score = record.risk_score;
-  const ring  = $('risk-ring');
+  const ring = $('risk-ring');
   const scoreEl = $('risk-score-number');
   if (ring) {
-    const circumference = 2 * Math.PI * 54; // r=54
+    const circumference = 2 * Math.PI * 54;
     const offset = circumference * (1 - score / 100);
-    ring.style.strokeDasharray  = circumference;
-    ring.style.strokeDashoffset = circumference; // start at 0
+    ring.style.strokeDasharray = circumference;
+    ring.style.strokeDashoffset = circumference;
     ring.style.stroke = score >= 60 ? '#ef4444' : score >= 30 ? '#f59e0b' : '#10b981';
     setTimeout(() => {
       ring.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
@@ -438,21 +438,19 @@ function renderVerdict(data) {
   }
 
   // Supplier info
-  setText('v-supplier',    record.supplier_name);
-  setText('v-origin',      record.origin_country);
+  setText('v-supplier', record.supplier_name);
+  setText('v-origin', record.origin_country);
   setText('v-destination', record.destination_country);
-  setText('v-cargo',       record.cargo_items.join(', '));
-  setText('v-esg',         record.esg_certifications.length ? record.esg_certifications.join(', ') : 'None declared');
-  setText('v-timestamp',   formatDate(record.timestamp_utc));
+  setText('v-cargo', record.cargo_items.join(', '));
+  setText('v-esg', record.esg_certifications.length ? record.esg_certifications.join(', ') : 'None declared');
+  setText('v-timestamp', formatDate(record.timestamp_utc));
   setText('v-verdict-detail', record.verdict_detail);
 
   // Flags
   const flagsEl = $('v-flags');
   if (flagsEl) {
     flagsEl.innerHTML = record.flags.length
-      ? record.flags.map(f =>
-          `<span class="flag-chip">${f.replace(/_/g, ' ')}</span>`
-        ).join('')
+      ? record.flags.map(f => `<span class="flag-chip">${f.replace(/_/g, ' ')}</span>`).join('')
       : '<span class="flag-chip flag-clear">NO FLAGS</span>';
   }
 
@@ -461,20 +459,39 @@ function renderVerdict(data) {
   if (logEl) {
     logEl.innerHTML = record.reasoning_log
       .map(line => {
-        const cls = line.startsWith('⚠') ? 'log-warn'
-                  : line.startsWith('✓') ? 'log-ok'
-                  : 'log-info';
+        const cls = line.startsWith('⚠') ? 'log-warn' : line.startsWith('✓') ? 'log-ok' : 'log-info';
         return `<div class="log-line ${cls}">${line}</div>`;
       })
       .join('');
   }
 
+  // AI INSIGHT - This shows the Noah AI reasoning
+  const insightText = data.ai_insight || 'AI analysis unavailable for this shipment.';
+  const proseEl = $('ai-insight-prose');
+  if (proseEl) {
+    proseEl.textContent = '';
+    proseEl.classList.add('ai-typing');
+    let i = 0;
+    function typeChar() {
+      if (i < insightText.length) {
+        proseEl.textContent += insightText[i++];
+        setTimeout(typeChar, 20);
+      } else {
+        proseEl.classList.remove('ai-typing');
+      }
+    }
+    typeChar();
+    show('ai-insight-card');
+  }
+
   // Hash display
   setText('audit-hash-display', data.audit_hash);
-  setText('audit-id-display',   record.audit_id);
+  setText('audit-id-display', record.audit_id);
 
   // Store for tamper simulation
-  $('tamper-original-hash').textContent = data.audit_hash;
+  if ($('tamper-original-hash')) {
+    $('tamper-original-hash').textContent = data.audit_hash;
+  }
 }
 
 // ─── BLOCKCHAIN ANCHOR ────────────────────────────────────────────────────────

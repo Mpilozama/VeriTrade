@@ -242,13 +242,16 @@ def root():
     return {"service": "VeriTrade AI Compliance Engine", "status": "operational"}
 
 @app.post("/api/assess")
-def assess_manifest(manifest: ManifestInput):
+async def assess_manifest(manifest: ManifestInput):
     """
     Primary endpoint: Submit a shipping manifest for AI risk assessment.
     Returns the full audit record + SHA-256 hash ready for blockchain anchoring.
     """
     # Run the rules-based AI engine
     risk_result = compute_risk(manifest)
+
+    # Call Noah AI for deep ethical reasoning
+    noah_data = await get_noah_insights(manifest)
 
     # Build deterministic audit record
     audit_record = build_audit_record(manifest, risk_result)
@@ -260,8 +263,8 @@ def assess_manifest(manifest: ManifestInput):
         "success": True,
         "audit_record": audit_record,
         "audit_hash": audit_hash,
-        "hash_input_preview": json.dumps(audit_record, sort_keys=True, separators=(",", ":"))[:200] + "...",
         "blockchain_ready": True,
+        "ai_insight": noah_data.get("reason", "AI analysis unavailable"),
     }
 
 
